@@ -27,14 +27,28 @@ namespace ScreenTimer
             InitializeComponent();
             SetupTimer();
             FetchInitialData();
-            _notifyIcon = new NotifyIcon();
-            _notifyIcon.Icon = new System.Drawing.Icon("timer.ico");
-            _notifyIcon.Visible = true;
-            _notifyIcon.Text = "ScreenTimer";
-            _notifyIcon.DoubleClick += (s, e) => {
-                this.Show();
-                this.WindowState = WindowState.Normal;
-            };
+
+            try {
+                _notifyIcon = new NotifyIcon();
+
+                // Tjek om filen findes før vi loader den
+                if (System.IO.File.Exists("timer.ico")) {
+                    _notifyIcon.Icon = new System.Drawing.Icon("timer.ico");
+                } else {
+                    // Brug standard system ikon hvis din fil mangler
+                    _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
+                }
+
+                _notifyIcon.Visible = true;
+                _notifyIcon.Text = "ScreenTimer";
+                _notifyIcon.DoubleClick += (s, e) => {
+                    this.Show();
+                    this.WindowState = WindowState.Normal;
+                };
+            } catch (Exception ex) {
+                // Log fejlen men lad appen starte
+                Console.WriteLine("NotifyIcon fejl: " + ex.Message);
+            }
         }
 
         private void SetupTimer()
