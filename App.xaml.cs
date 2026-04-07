@@ -1,13 +1,38 @@
-﻿using System.Configuration;
-using System.Data;
+﻿using System.Threading;
 using System.Windows;
 
-namespace ScreenTimer;
-
-/// <summary>
-/// Interaction logic for App.xaml
-/// </summary>
-// Her fortæller vi den præcis, at det er WPF Application vi bruger:
-public partial class App : System.Windows.Application
+namespace ScreenTimer
 {
+    public partial class App : System.Windows.Application
+    {
+        // En Mutex med et unikt navn for din app
+        private static Mutex? _mutex;
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            const string appName = "ScreenTimer-Unique-ID-12345";
+            _mutex = new Mutex(true, appName, out bool createdNew);
+
+            if (!createdNew)
+            {
+                // Appen kører allerede!
+                // Vi giver en besked (valgfrit) og lukker denne nye instans ned med det samme.
+                System.Windows.MessageBox.Show("ScreenTimer kører allerede i baggrunden (tjek ved uret).", "Information");
+                System.Windows.Application.Current.Shutdown();
+                return;
+            }
+
+            base.OnStartup(e);
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            if (_mutex != null)
+            {
+                _mutex.ReleaseMutex();
+                _mutex.Dispose();
+            }
+            base.OnExit(e);
+        }
+    }
 }

@@ -69,7 +69,11 @@ namespace ScreenTimer
                 RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
                 if (key != null)
                 {
-                    key.SetValue("ScreenTimer", "\"" + Assembly.GetExecutingAssembly().Location.Replace(".dll", ".exe") + "\"");
+                    // Vi ændrer SetValue til DeleteValue for at fjerne den fra Windows opstart
+                    if (key.GetValue("ScreenTimer") != null)
+                    {
+                        key.DeleteValue("ScreenTimer");
+                    }
                 }
             }
             catch { }
