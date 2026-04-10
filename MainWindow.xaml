@@ -4,20 +4,55 @@
         Title="ScreenTimer" Height="120" Width="250"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" MouseLeftButtonDown="Window_MouseLeftButtonDown"
-        x:Name="ThisWindow"> <Border x:Name="MainBorder" Background="#222222" CornerRadius="15"
-            BorderBrush="#00FF00" BorderThickness="2">
+        x:Name="ThisWindow">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+
+    <Border x:Name="MainBorder" Background="#222222" CornerRadius="15"
+            BorderBrush="{Binding BorderColor}" BorderThickness="2">
         <Grid>
-            <Button x:Name="btnSizeToggle" Content="" FontFamily="Segoe MDL2 Assets"
-                    FontSize="10" Background="Transparent" Foreground="Gray"
-                    BorderThickness="0" HorizontalAlignment="Right" VerticalAlignment="Top"
-                    Margin="8" Click="btnSizeToggle_Click" Cursor="Hand"/>
+            <Button x:Name="btnSizeToggle" Command="{Binding ToggleSizeCommand}"
+                    Content="{Binding SizeIcon}" FontFamily="Segoe MDL2 Assets"
+                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
+                    Background="Transparent" Foreground="Gray" BorderThickness="0" Cursor="Hand"
+                    Panel.ZIndex="10"/>
 
             <StackPanel x:Name="MainContainer" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock x:Name="lblTime" Text="00:00:00" FontSize="36" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center"/>
+
+                <StackPanel x:Name="BonusPanelNormal" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,5"
+                            Visibility="{Binding NormalBonusVisibility}">
+                   <TextBlock Text="{Binding FormattedBonusPot}" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                   <TextBlock Text=" BONUSTID" Foreground="White" FontSize="10" FontWeight="Bold" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" x:Name="TimerArea" HorizontalAlignment="Center">
+                    <TextBlock x:Name="txtTimer" Text="{Binding TimerDisplay}"
+                               FontSize="{Binding TimerFontSize}"
+                               Foreground="White" FontWeight="Bold" Margin="{Binding TimerMargin}"
+                               VerticalAlignment="Center"/>
+
+                    <TextBlock x:Name="lblBonusMini" Text=" BONUSTID" Foreground="White" FontSize="16"
+                               FontWeight="Bold" VerticalAlignment="Center" Margin="5,2,0,0"
+                               Visibility="{Binding ShowBonusInMini, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
 
                 <StackPanel x:Name="ButtonPanel" Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
-                    <Button x:Name="btnToggle" Content="START" Click="btnToggle_Click" Width="65" Height="25" Margin="5" Background="#444" Foreground="White" BorderThickness="0"/>
-                    <Button x:Name="btnSync" Content="SYNC" Click="btnSync_Click" Width="65" Height="25" Margin="5" Background="#444" Foreground="White" BorderThickness="0"/>
+                    <Button x:Name="btnToggle" Command="{Binding ToggleCommand}"
+                            Content="{Binding ToggleButtonText}"
+                            Margin="0" Background="#444" Foreground="White" BorderThickness="0"
+                            Visibility="{Binding IsTimerControlsVisible, Converter={StaticResource BoolToVis}}"/>
+
+                    <Button x:Name="btnSync" Command="{Binding SyncCommand}"
+                            Content="SYNC"
+                            Margin="0" Background="#444" Foreground="White" BorderThickness="0"
+                            Visibility="{Binding IsTimerControlsVisible, Converter={StaticResource BoolToVis}}"/>
+
+                    <Button x:Name="btnBonusMenu" Command="{Binding ToggleBonusCommand}" Content="&#xE700;"
+                            Foreground="White" Background="Transparent" BorderThickness="0"
+                            FontFamily="Segoe MDL2 Assets" FontSize="16" Margin="5,0"
+                            Visibility="{Binding IsMini, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </StackPanel>
         </Grid>

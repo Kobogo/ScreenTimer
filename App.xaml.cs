@@ -15,9 +15,6 @@ namespace ScreenTimer
 
             if (!createdNew)
             {
-                // Appen kører allerede!
-                // Vi giver en besked (valgfrit) og lukker denne nye instans ned med det samme.
-                System.Windows.MessageBox.Show("ScreenTimer kører allerede i baggrunden (tjek ved uret).", "Information");
                 System.Windows.Application.Current.Shutdown();
                 return;
             }
