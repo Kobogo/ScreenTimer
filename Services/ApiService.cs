@@ -17,6 +17,7 @@ namespace ScreenTimer.Services
         {
             try
             {
+                // Bemærk: Du havde reset-daily-time her, jeg beholder din eksisterende logik
                 await _client.PostAsync($"{_apiUrl}/reset-daily-time/{_userId}", null);
                 var response = await _client.GetStringAsync($"{_apiUrl}/{_userId}");
                 return JsonConvert.DeserializeObject<JObject>(response);
@@ -42,6 +43,17 @@ namespace ScreenTimer.Services
                 var json = JsonConvert.SerializeObject(minutesUsed);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 await _client.PatchAsync($"{_apiUrl}/{_userId}/sync", content);
+            }
+            catch { }
+        }
+
+        public async Task AdjustTimeAsync(int newMinutes)
+        {
+            try
+            {
+                var json = JsonConvert.SerializeObject(newMinutes);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                await _client.PatchAsync($"{_apiUrl}/{_userId}/adjust-time", content);
             }
             catch { }
         }

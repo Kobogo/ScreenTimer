@@ -148,6 +148,7 @@ namespace ScreenTimer.ViewModels
         public ICommand ToggleSizeCommand { get; }
         public ICommand ToggleBonusCommand { get; }
         public ICommand ResumeFromInactivityCommand { get; }
+        public ICommand RollbackTimeCommand { get; }
 
         public MainViewModel()
         {
@@ -159,10 +160,13 @@ namespace ScreenTimer.ViewModels
             SyncCommand = new RelayCommand(_ => InitializeAsync());
             ToggleSizeCommand = new RelayCommand(_ => ToggleSize());
             ToggleBonusCommand = new RelayCommand(_ => ShowBonusInMini = !ShowBonusInMini);
+
             ResumeFromInactivityCommand = new RelayCommand(_ => {
                 ShowInactivePopup = false;
                 if (!IsRunning) ToggleTimer();
             });
+
+            RollbackTimeCommand = new RelayCommand(_ => RollbackTime());
 
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _timer.Tick += Timer_Tick;
@@ -185,10 +189,14 @@ namespace ScreenTimer.ViewModels
                     _totalSecondsLeft = mins * 60;
                     _initialTotalSeconds = _totalSecondsLeft;
                     SaturdayBonusPot = data["saturdayBonusPot"]?.ToString() ?? "0";
-                    IsRunning = data.Value<bool>("isTimerRunning");
+
+                    // Løsning B: Tving altid til pause ved opstart for at undgå "ghost timing"
+                    IsRunning = false;
+                    _timer.Stop();
+                    await _apiService.UpdateStatusAsync(false);
+
                     _hasWarnedYellow = _hasWarnedRed = false;
                     UpdateDisplay();
-                    if (IsRunning && _totalSecondsLeft > 0) _timer.Start();
                 }
                 else
                 {
@@ -207,7 +215,8 @@ namespace ScreenTimer.ViewModels
         {
             if (IsRunning && _totalSecondsLeft > 0)
             {
-                if (GetIdleTime() >= 900) // 15 minutter inaktivitet
+                // Tjekker inaktivitet (900 sekunder = 15 minutter)
+                if (GetIdleTime() >= 900)
                 {
                     HandleInactivity();
                     return;
@@ -233,10 +242,27 @@ namespace ScreenTimer.ViewModels
             IsRunning = false;
             _apiService.UpdateStatusAsync(false);
 
-            // Sikr at UI opdateres på hovedtråden
             System.Windows.Application.Current.Dispatcher.Invoke(() => {
                 ShowInactivePopup = true;
             });
+        }
+
+        private async void RollbackTime()
+        {
+            // Læg 15 minutter (900 sekunder) tilbage på uret
+            _totalSecondsLeft += 900;
+
+            UpdateDisplay();
+            ShowInactivePopup = false;
+
+            // Start timeren igen
+            IsRunning = true;
+            _timer.Start();
+
+            // Synkroniser ændringen med serveren
+            int newMinutes = _totalSecondsLeft / 60;
+            await _apiService.AdjustTimeAsync(newMinutes);
+            await _apiService.UpdateStatusAsync(true);
         }
 
         private void ToggleTimer()
