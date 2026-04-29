@@ -20,19 +20,41 @@ namespace ScreenTimer
             var vm = new MainViewModel();
             this.DataContext = vm;
 
-            // 1. Hent og påfør gemte indstillinger
+            // 1. Hent og påfør gemte indstillinger med skærm-tjek
             var (left, top, isMini) = _settingsService.LoadSettings();
-            this.WindowStartupLocation = WindowStartupLocation.Manual;
 
-            if (!double.IsNaN(left)) this.Left = left;
-            if (!double.IsNaN(top)) this.Top = top;
+            if (!double.IsNaN(left) && !double.IsNaN(top))
+            {
+                // Sikkerheds-tjek: Er koordinaterne synlige på de nuværende skærme?
+                // Vi tjekker VirtualScreen for at tage højde for alle tilsluttede skærme.
+                double virtualLeft = SystemParameters.VirtualScreenLeft;
+                double virtualTop = SystemParameters.VirtualScreenTop;
+                double virtualWidth = SystemParameters.VirtualScreenWidth;
+                double virtualHeight = SystemParameters.VirtualScreenHeight;
+
+                // Hvis vinduet er uden for det synlige område, centrerer vi det i stedet
+                if (left < virtualLeft || left > (virtualLeft + virtualWidth - 50) ||
+                    top < virtualTop || top > (virtualTop + virtualHeight - 50))
+                {
+                    this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                }
+                else
+                {
+                    this.WindowStartupLocation = WindowStartupLocation.Manual;
+                    this.Left = left;
+                    this.Top = top;
+                }
+            }
+            else
+            {
+                this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            }
 
             vm.IsMini = isMini;
 
             // 2. Lyt efter ændringer i ViewModel
             vm.PropertyChanged += (s, e) =>
             {
-                // Håndter layout skift
                 if (e.PropertyName == nameof(MainViewModel.IsMini))
                 {
                     Dispatcher.Invoke(() => {
@@ -40,7 +62,6 @@ namespace ScreenTimer
                     });
                 }
 
-                // Håndter det eksterne inaktivitets-vindue
                 if (e.PropertyName == nameof(MainViewModel.ShowInactivePopup))
                 {
                     Dispatcher.Invoke(() => {
@@ -63,7 +84,6 @@ namespace ScreenTimer
                     _currentPopup = new InactiveWindow();
                     _currentPopup.DataContext = vm;
 
-                    // Placer popuppen centreret over hovedvinduet
                     _currentPopup.Left = this.Left + (this.Width / 2) - (_currentPopup.Width / 2);
                     _currentPopup.Top = this.Top - _currentPopup.Height - 10;
 
@@ -73,11 +93,8 @@ namespace ScreenTimer
             }
             else
             {
-                if (_currentPopup != null)
-                {
-                    _currentPopup.Close();
-                    _currentPopup = null;
-                }
+                _currentPopup?.Close();
+                _currentPopup = null;
             }
         }
 
@@ -85,6 +102,7 @@ namespace ScreenTimer
         {
             if (this.DataContext is MainViewModel vm)
             {
+                // Vi gemmer de aktuelle koordinater
                 _settingsService.SaveSettings(this.Left, this.Top, vm.IsMini);
             }
 
