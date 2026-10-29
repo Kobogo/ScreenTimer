@@ -1,0 +1,15 @@
+# Build mapper
+bin/
+obj/
+publish/
+
+# Visual Studio / VS Code specifikke filer
+.vscode/
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Andre midlertidige filer
+*.log
+.DS_Store
